@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DevPath: do zero a SRE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef2f6;--card:#fff;--ink:#14213d;--mut:#5a6787;--line:#d6dde8;--acc:#2f5bff;--ok:#0f9d76;--warn:#f2a900;--hot:#ff5a4e;--code:#14213d;--codefg:#e8eefc;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1729;--card:#18233d;--ink:#eaf0ff;--mut:#9aa8c7;--line:#2a3757;--acc:#6f8cff;--ok:#2ec99b;--code:#0a1122;--codefg:#e8eefc}}
+:root[data-theme="dark"]{--bg:#0f1729;--card:#18233d;--ink:#eaf0ff;--mut:#9aa8c7;--line:#2a3757;--acc:#6f8cff;--ok:#2ec99b;--code:#0a1122;--codefg:#e8eefc}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Instrument Sans",system-ui,sans-serif}
+.w{max-width:720px;margin:0 auto;padding:20px 16px 60px}
+h1,h2,h3{font-family:"Bricolage Grotesque",system-ui,sans-serif;line-height:1.15;margin:0}
+h1{font-size:2rem;font-weight:800}
+h2{font-size:1.25rem;margin:28px 0 12px}
+.sub{color:var(--mut);margin:4px 0 18px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:600}
+.bar{height:12px;background:var(--line);border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--acc);border-radius:6px;transition:width .4s}
+.lvl{display:flex;justify-content:space-between;font-size:.9rem;color:var(--mut);margin:6px 0 0}
+.les{display:flex;gap:14px;align-items:center;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;color:inherit;font:inherit;cursor:pointer}
+.les:hover{border-color:var(--acc)}
+.dot{flex:none;width:44px;height:44px;border-radius:50%;background:var(--bg);border:3px solid var(--line);display:grid;place-items:center;font-weight:700}
+.les.done .dot{background:var(--ok);border-color:var(--ok);color:#fff}
+.les.part .dot{border-color:var(--warn)}
+.les b{font-family:"Bricolage Grotesque",sans-serif;font-size:1.05rem;display:block}
+.les small{color:var(--mut)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.back{background:none;border:0;color:var(--acc);font:inherit;font-weight:600;cursor:pointer;padding:0;margin-bottom:14px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
+.panel h3{margin-bottom:8px}
+pre{background:var(--code);color:var(--codefg);border-radius:10px;padding:14px;overflow-x:auto;font:400 .85rem/1.6 "IBM Plex Mono",monospace;margin:10px 0 0}
+code{font-family:"IBM Plex Mono",monospace;font-size:.88em;background:var(--bg);padding:1px 5px;border-radius:4px}
+label.t{display:flex;gap:10px;align-items:flex-start;padding:8px 0;cursor:pointer}
+label.t input{width:20px;height:20px;margin-top:3px;accent-color:var(--ok)}
+.o{display:block;width:100%;text-align:left;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-top:8px;color:inherit;font:inherit;cursor:pointer}
+.o.right{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 18%,transparent)}
+.o.wrong{border-color:var(--hot)}
+.msg{margin-top:10px;font-weight:500}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.bd{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;font-size:.9rem;opacity:.45}
+.bd.on{opacity:1;border-color:var(--warn)}
+.bd span{font-size:1.6rem;display:block}
+.rs{margin-top:30px;background:none;border:0;color:var(--mut);text-decoration:underline;cursor:pointer;font:inherit}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<div class="w" id="app"></div>
+<script>
+var L=[
+{id:1,m:"Cloud",t:"O que é cloud",th:"Cloud é usar computadores de outra empresa (AWS, Azure, GCP) pela internet e pagar só pelo que usar. Em vez de comprar servidor, você cria um em minutos. Três camadas: <b>IaaS</b> (você gerencia o servidor virtual, ex.: EC2), <b>PaaS</b> (a plataforma gerencia o servidor, ex.: Elastic Beanstalk) e <b>SaaS</b> (software pronto, ex.: Gmail). Recursos ficam em <b>regiões</b> (ex.: sa-east-1, São Paulo) divididas em <b>zonas de disponibilidade</b>, que são datacenters separados. Isso é a base da confiabilidade que um SRE persegue.",code:"# Exemplo: identificar sua conta na AWS via CLI\naws sts get-caller-identity\naws ec2 describe-regions --query 'Regions[].RegionName'",tasks:["Criar uma conta AWS (free tier)","Ativar MFA na conta root","Criar um alerta de orçamento de US$ 5 no AWS Budgets"],q:{q:"Você gerencia o sistema operacional e a rede de uma VM. Qual modelo é esse?",o:["SaaS","PaaS","IaaS"],a:2,w:"IaaS entrega a infraestrutura; o SO e o que roda nele ficam com você."}},
+{id:2,m:"Base",t:"Linux no terminal",th:"Quase toda infra roda em Linux. O essencial: navegar (<code>cd</code>, <code>ls</code>), ler arquivos (<code>cat</code>, <code>tail -f</code>), buscar texto (<code>grep</code>), ver processos (<code>ps</code>, <code>top</code>), permissões (<code>chmod</code>, <code>chown</code>) e serviços (<code>systemctl</code>). Combine tudo com pipes (<code>|</code>). Não decore: repita até virar reflexo.",code:"ps aux | grep nginx\ntail -f /var/log/syslog | grep -i error\nchmod +x deploy.sh && ./deploy.sh\nsystemctl status ssh",tasks:["Criar um script backup.sh que copia uma pasta para /tmp/backup","Dar permissão de execução e rodá-lo","Achar as 5 linhas mais recentes com 'error' em algum log usando grep e tail"],q:{q:"Qual comando mostra o log em tempo real?",o:["cat arquivo.log","tail -f arquivo.log","ls -l arquivo.log"],a:1,w:"tail -f fica acompanhando novas linhas conforme chegam."}},
+{id:3,m:"Base",t:"Git no dia a dia",th:"Git guarda o histórico do seu código e é a porta de entrada de todo pipeline CI/CD. Fluxo básico: <code>git add</code> prepara, <code>git commit</code> registra, <code>git push</code> envia. Use <b>branches</b> para trabalhar sem quebrar a principal e abra um <b>pull request</b> para juntar. Commits pequenos e com mensagem clara salvam sua vida numa investigação de incidente.",code:"git init\ngit add .\ngit commit -m \"feat: primeira versão\"\ngit switch -c minha-feature\ngit push -u origin minha-feature",tasks:["Criar um repositório 'devops-lab' no GitHub","Fazer 3 commits com mensagens claras","Criar uma branch, fazer uma mudança e abrir um pull request"],q:{q:"Para que serve uma branch?",o:["Apagar o histórico","Trabalhar em mudanças isoladas da principal","Fazer backup do servidor"],a:1,w:"Branches isolam o trabalho até ele estar pronto para ser integrado."}},
+{id:4,m:"Base",t:"Redes para DevOps",th:"Todo problema misterioso em produção vira problema de rede. Guarde: <b>IP</b> identifica a máquina, <b>porta</b> identifica o serviço (80 HTTP, 443 HTTPS, 22 SSH), <b>DNS</b> traduz nomes em IPs e <b>HTTP</b> é o protocolo da web, com status como 200 (ok), 404 (não achou) e 500 (erro do servidor). Se o site não abre, pergunte na ordem: o nome resolve? A porta responde? O serviço responde certo?",code:"dig google.com +short\ncurl -I https://google.com\nss -tlnp\nping -c 3 8.8.8.8",tasks:["Descobrir o IP de 3 sites com dig","Ver o status HTTP de um site com curl -I","Listar as portas abertas na sua máquina com ss -tlnp"],q:{q:"Um site retorna status 500. De quem é o problema, em geral?",o:["Do servidor","Do seu navegador","Do seu DNS"],a:0,w:"Códigos 5xx indicam falha no lado do servidor."}},
+{id:5,m:"Cloud",t:"IAM e segurança",th:"IAM define <b>quem</b> pode fazer <b>o quê</b> na AWS. Conceitos: <b>usuário</b> (pessoa), <b>role</b> (identidade temporária para serviços) e <b>policy</b> (regras em JSON). O princípio de ouro é o <b>menor privilégio</b>: dê só o acesso necessário. Nunca use a conta root no dia a dia e nunca coloque chaves de acesso no Git.",code:"{\n  \"Effect\": \"Allow\",\n  \"Action\": \"s3:GetObject\",\n  \"Resource\": \"arn:aws:s3:::meu-bucket/*\"\n}",tasks:["Criar um usuário IAM com acesso apenas de leitura ao S3","Configurar o AWS CLI com esse usuário (aws configure)","Criar um bucket S3 e listar com aws s3 ls"],q:{q:"O que diz o princípio do menor privilégio?",o:["Dar acesso total para evitar erros","Dar somente as permissões necessárias","Compartilhar uma conta entre a equipe"],a:1,w:"Menos permissão significa menos estrago se algo vazar."}},
+{id:6,m:"Docker",t:"Seu primeiro container",th:"Container empacota app e dependências para rodar igual em qualquer lugar. Uma <b>imagem</b> é a receita; o <b>container</b> é a receita em execução. O <b>Dockerfile</b> descreve como montar a imagem. Comece com <code>docker run</code> e depois escreva o seu Dockerfile.",code:"docker run -d -p 8080:80 nginx\ndocker ps\ndocker logs <id>\ndocker stop <id>",tasks:["Instalar o Docker e rodar o nginx na porta 8080","Abrir localhost:8080 e ver logs com docker logs","Escrever um Dockerfile que serve este arquivo HTML e gerar a imagem com docker build"],q:{q:"Qual a diferença entre imagem e container?",o:["São a mesma coisa","Imagem é a receita, container é ela em execução","Container é a receita, imagem é o servidor"],a:1,w:"A imagem é estática; ao executá-la você tem um container."}}
+];
+var LV=["Estagiária de nuvem","Aprendiz de terminal","Domadora de containers","Construtora de pipelines","Engenheira de confiabilidade"];
+var S={xp:0,streak:0,last:"",d:{}},cur=null,msg="";
+try{var r=localStorage.getItem("devpath");if(r)S=JSON.parse(r)}catch(e){}
+function save(){try{localStorage.setItem("devpath",JSON.stringify(S))}catch(e){}}
+function ds(o){return new Date(Date.now()-o*864e5).toLocaleDateString("sv")}
+function touch(){var t=ds(0);if(S.last===t)return;S.streak=(S.last===ds(1))?S.streak+1:1;S.last=t}
+function st(l){var s=S.d[l.id]||{t:[],q:0};return s}
+function done(l){var s=st(l);return l.tasks.every(function(_,i){return s.t[i]})&&s.q}
+function xp(){var x=0;L.forEach(function(l){var s=st(l);s.t.forEach(function(v){if(v)x+=10});if(s.q)x+=20;if(done(l))x+=20});return x}
+function $(h){document.getElementById("app").innerHTML=h;window.scrollTo(0,0)}
+function head(){var x=xp(),lv=Math.min(Math.floor(x/100),LV.length-1),p=x%100;if(lv==LV.length-1&&x>=400)p=100;
+return '<h1>DevPath</h1><p class="sub">Do zero a SRE, uma lição por vez.</p><div class="stats"><span class="chip">🔥 '+S.streak+' dia'+(S.streak==1?'':'s')+'</span><span class="chip">⚡ '+x+' XP</span><span class="chip">Nível '+(lv+1)+': '+LV[lv]+'</span></div><div class="bar"><i style="width:'+p+'%"></i></div><div class="lvl"><span>Próximo nível a cada 100 XP</span><span>'+p+'/100</span></div>'}
+function home(){cur=null;var n=L.filter(done).length,x=xp();
+var h=head()+'<h2>Trilha</h2>';
+L.forEach(function(l){var d=done(l),s=st(l),any=s.q||s.t.some(Boolean);
+h+='<button class="les '+(d?'done':any?'part':'')+'" onclick="open_('+l.id+')"><span class="dot">'+(d?'✓':l.id)+'</span><span><b>'+l.t+'</b><small>'+l.m+' · '+l.tasks.length+' práticas + 1 quiz</small></span></button>'});
+var B=[["🚀","Primeira lição",n>=1],["🔥","3 dias seguidos",S.streak>=3],["⚡","100 XP",x>=100],["☁️","Mestre da cloud",L.filter(function(l){return l.m=="Cloud"}).every(done)],["🐳","Container no ar",done(L[5])],["🏆","Trilha completa",n==L.length]];
+h+='<h2>Conquistas</h2><div class="badges">';B.forEach(function(b){h+='<div class="bd '+(b[2]?'on':'')+'"><span>'+b[0]+'</span>'+b[1]+'</div>'});
+h+='</div><button class="rs" onclick="reset_()">Zerar progresso</button>';$(h)}
+function open_(id){cur=L.filter(function(l){return l.id==id})[0];msg="";lesson()}
+function lesson(){var l=cur,s=st(l);
+var h='<button class="back" onclick="home()">← Voltar à trilha</button><h1>'+l.t+'</h1><p class="sub">'+l.m+'</p>';
+h+='<div class="panel"><h3>Teoria rápida</h3><p>'+l.th+'</p><pre>'+l.code.replace(/</g,"&lt;")+'</pre></div>';
+h+='<div class="panel"><h3>Mão na massa (+10 XP cada)</h3>';
+l.tasks.forEach(function(t,i){h+='<label class="t"><input type="checkbox" '+(s.t[i]?'checked':'')+' onchange="tk('+i+',this.checked)"><span>'+t+'</span></label>'});
+h+='</div><div class="panel"><h3>Quiz (+20 XP)</h3><p>'+l.q.q+'</p>';
+l.q.o.forEach(function(o,i){var c=s.q&&i==l.q.a?'right':'';h+='<button class="o '+c+'" onclick="an('+i+')">'+o+'</button>'});
+h+='<div class="msg">'+(s.q?'✅ '+l.q.w:msg)+'</div></div>';
+if(done(l))h+='<div class="panel" style="border-color:var(--ok)"><h3>Lição concluída! +20 XP de bônus 🎉</h3><p>Volte à trilha e siga para a próxima.</p></div>';
+$(h)}
+function tk(i,v){var s=st(cur);s.t[i]=v?1:0;S.d[cur.id]=s;if(v)touch();save();var y=window.scrollY;lesson();window.scrollTo(0,y)}
+function an(i){var s=st(cur);if(i==cur.q.a){s.q=1;S.d[cur.id]=s;touch();save();msg=""}else msg="❌ Ainda não. Releia a teoria e tente de novo.";var y=window.scrollY;lesson();window.scrollTo(0,y)}
+function reset_(){if(confirm("Apagar todo o seu progresso?")){S={xp:0,streak:0,last:"",d:{}};save();home()}}
+home();
+</script>
+</body>
+</html>
